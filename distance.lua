@@ -11,7 +11,7 @@ measureTimer = tmr.create();
 distance.start = function ()
     local distanceHysteresis = 25;
     local splitDistance = 150;
-    local measurmentInterval = 1500;
+    local measurementInterval = 3000;
 
     function start()
         rtctime.set(0, 0);
@@ -20,16 +20,16 @@ distance.start = function ()
             if (code == 200) then
                 distanceHysteresis = jsonData.data.distanceHysteresis;
                 splitDistance = jsonData.data.splitDistance;
-                measurmentInterval = jsonData.data.measurmentInterval;
+                measurementInterval = jsonData.data.measurementInterval;
                 
                 print(distanceHysteresis);
                 print(splitDistance);
-                print(measurmentInterval);
+                print(measurementInterval);
             else
                 print('Calibration unsucessfull, returned HTTP code ', code);
             end       
 
-            measureTimer:register(measurmentInterval, tmr.ALARM_SEMI, function ()
+            measureTimer:register(measurementInterval, tmr.ALARM_SEMI, function ()
                 getDistance(function (distance)
                     sendMeasurment(distance, function ()
                         measureTimer:start();

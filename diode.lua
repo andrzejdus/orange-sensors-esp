@@ -22,7 +22,6 @@ function diode.create(statusDiodePin)
         statusDiodeTimer:unregister();
     end
 
-
     function turnOff()
         gpio.write(statusDiodePin, gpio.LOW);
         statusDiodeTimer:unregister();
