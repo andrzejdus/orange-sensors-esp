@@ -1,23 +1,29 @@
+function getResponseHandler(finishedCallback)
+    return function(code, body, headers)
+        local decodedBody = nil;
+        if (code ~= 200) then
+            print(string.format('HTTP request failed, status %s', code));
+        else
+            decodedBody = sjson.decode(body);
+        end
+        print('Response headers', sjson.encode(headers));
+        print('Response body', body);
+    
+        finishedCallback(code, decodedBody);
+    end
+end
+
 function get(baseUrl, urlPath, finishedCallback)
     local url = string.format('%s/%s', baseUrl, urlPath);
     local headers = 'Content-Type: application/json\n';
     
     print(string.format('Getting data from %s', url));
-    http.get(url, nil, function(code, data)
-        local decodedData = nil;
-        if (code ~= 200) then
-            print(string.format('HTTP request failed, status %s', code));
-        else
-            decodedData = sjson.decode(data);
-        end
-        print('Response', data);
-
-        finishedCallback(code, decodedData);
-    end);
+    http.get(url, nil, getResponseHandler(finishedCallback));
 end
 
 function post(baseUrl, urlPath, body, finishedCallback)
     local url = string.format('%s/%s', baseUrl, urlPath);
+    -- local headers = 'Content-Type: application/json\nHost: orange-sensors-web.us-east-1.elasticbeanstalk.com\n';
     local headers = 'Content-Type: application/json\n';
     
     print(string.format('Sending data to %s', url));
@@ -25,17 +31,7 @@ function post(baseUrl, urlPath, body, finishedCallback)
     print('Body', body);
 
 --    if (false) then
-    http.post(url, headers, body, function(code, data)
-        local decodedData = nil;
-        if (code ~= 200) then
-            print(string.format('HTTP request failed, status %s', code));
-        else
-            decodedData = sjson.decode(data);
-        end
-        print('Response', data);
-
-        finishedCallback(code, decodedData);
-    end);
+    http.post(url, headers, body, getResponseHandler(finishedCallback));
 --    end
 end
 
