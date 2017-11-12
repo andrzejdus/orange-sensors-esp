@@ -2,9 +2,9 @@ local httpJsonClient = require 'httpJsonClient';
 
 local distance = {}
 
-local baseUrl = 'http://10.0.0.3:2403';
+-- local baseUrl = 'http://10.0.0.3:5000';
 -- local baseUrl = 'http://orange-sensors-api.ds1.pl';
--- local baseUrl = 'http://nodemcu-build.com';
+local baseUrl = 'http://orange-sensors-api.us-east-1.elasticbeanstalk.com';
 local TRIGGER_PIN = 6;
 local ECHO_PIN = 7;
 
@@ -14,17 +14,35 @@ end
 measureTimer = tmr.create();
 
 distance.start = function ()
+    local distanceHysteresis = 25;
+    local splitDistance = 150;
+    local measurmentInterval = 1500;
+
     function start()
         rtctime.set(0, 0);
 
-        measureTimer:register(1000, tmr.ALARM_SEMI, function ()
-            getDistance(function (distance)
-                sendMeasurment(distance, function ()
-                    measureTimer:start();
+        httpJsonClient.get(baseUrl, 'calibration', function(code, jsonData)
+            if (code == 200) then
+                distanceHysteresis = jsonData.data.distanceHysteresis;
+                splitDistance = jsonData.data.splitDistance;
+                measurmentInterval = jsonData.data.measurmentInterval;
+                
+                print(distanceHysteresis);
+                print(splitDistance);
+                print(measurmentInterval);
+            else
+                print('Calibration unsucessfull, returned HTTP code ', code);
+            end       
+
+            measureTimer:register(measurmentInterval, tmr.ALARM_SEMI, function ()
+                getDistance(function (distance)
+                    sendMeasurment(distance, function ()
+                        measureTimer:start();
+                    end);
                 end);
             end);
+            measureTimer:start();        
         end);
-        measureTimer:start();
     end
 
     function sendMeasurment(distance, finishedCallback)
@@ -63,7 +81,7 @@ distance.start = function ()
         
                 local distance = waveTime / 58;
                 measurmentFinished = true;
-                print(string.format('Measured %d cm distance (secDelta %f)', distance, secDelta));
+                print(string.format('Measured %d cm distance (secDelta %d)', distance, secDelta));
                 finishedCallback(distance);
             end
         end)
