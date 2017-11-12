@@ -1,12 +1,7 @@
+local config = require 'config';
 local httpJsonClient = require 'httpJsonClient';
 
 local distance = {}
-
--- local baseUrl = 'http://10.0.0.3:5000';
--- local baseUrl = 'http://orange-sensors-api.ds1.pl';
-local baseUrl = 'http://orange-sensors-api.us-east-1.elasticbeanstalk.com';
-local TRIGGER_PIN = 6;
-local ECHO_PIN = 7;
 
 if (measureTimer) then
     tmr.unregister(measureTimer);
@@ -21,7 +16,7 @@ distance.start = function ()
     function start()
         rtctime.set(0, 0);
 
-        httpJsonClient.get(baseUrl, 'calibration', function(code, jsonData)
+        httpJsonClient.get(config.BASE_URL, 'calibration', function(code, jsonData)
             if (code == 200) then
                 distanceHysteresis = jsonData.data.distanceHysteresis;
                 splitDistance = jsonData.data.splitDistance;
@@ -52,7 +47,7 @@ distance.start = function ()
         };
 
         print(string.format('Sending measurment %d cm', distance));
-        httpJsonClient.post(baseUrl, 'measurement', body, finishedCallback);
+        httpJsonClient.post(config.BASE_URL, 'measurement', body, finishedCallback);
     end
     
     function getDistance(finishedCallback)
@@ -60,11 +55,11 @@ distance.start = function ()
         local startSec, startUsec;
         local endSec, endUsec;
         
-        gpio.mode(TRIGGER_PIN, gpio.OUTPUT);
-        gpio.write(TRIGGER_PIN, gpio.LOW);
+        gpio.mode(config.TRIGGER_PIN, gpio.OUTPUT);
+        gpio.write(config.TRIGGER_PIN, gpio.LOW);
 
-        gpio.mode(ECHO_PIN, gpio.INT);
-        gpio.trig(ECHO_PIN, "both", function(level)
+        gpio.mode(config.ECHO_PIN, gpio.INT);
+        gpio.trig(config.ECHO_PIN, "both", function(level)
             if (level == 1) then
                 startSec, startUsec = rtctime.get();
             end
@@ -99,9 +94,9 @@ distance.start = function ()
 
     function trigger()
         tmr.delay(20);
-        gpio.write(TRIGGER_PIN, gpio.HIGH);
+        gpio.write(config.TRIGGER_PIN, gpio.HIGH);
         tmr.delay(10);
-        gpio.write(TRIGGER_PIN, gpio.LOW);
+        gpio.write(config.TRIGGER_PIN, gpio.LOW);
     end
 
     start();

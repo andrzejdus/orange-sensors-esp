@@ -1,9 +1,10 @@
 local diode = require 'diode';
+local config = require 'config';
 
 local wifiHandler = {};
 
-function wifiHandler.init(statusDiodePin, wifiReadyCallback, wifiInteruppedCallback)
-    local statusDiode = diode.create(statusDiodePin);
+function wifiHandler.init(wifiReadyCallback, wifiInteruppedCallback)
+    local statusDiode = diode.create(config.STATUS_DIODE_PIN);
 
     function wifiConnected(ssid)
         print(string.format('Wi-Fi "%s" is connected', ssid));

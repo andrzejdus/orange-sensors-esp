@@ -6,7 +6,7 @@ function startup()
         
         file.close('init.lua')
 
-        dofile('script1.lua')
+        dofile('app.lua')
     end
 end
 
