@@ -1,4 +1,4 @@
-local delay = 3000;
+local delay = 5000;
 
 print('---------------------------');
 print(string.format('Waiting %s ms before running app.lua (you can delete it now)', delay));
