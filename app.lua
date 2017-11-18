@@ -3,8 +3,9 @@ enduser_setup.start()
 local wifiHandler = require 'wifiHandler';
 local distance = require 'distance';
 
+local d = distance.create();
 wifiHandler.init(function ()
-    distance.start();
+    d.start();
 end, function ()
-    distance.stop();
+    d.stop();
 end);

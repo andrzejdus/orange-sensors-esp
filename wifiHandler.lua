@@ -57,7 +57,7 @@ function wifiHandler.init(wifiReadyCallback, wifiInteruppedCallback)
 
             print(string.format('Wifi not connected for %d seconds', noWifiSeconds));
     
-            if (noWifiSeconds > 15) then
+            if (noWifiSeconds > 10) then
                 print('Reconnecting wifi');
                 wifi.sta.disconnect();
                 wifi.sta.connect();

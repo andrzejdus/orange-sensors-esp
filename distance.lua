@@ -1,56 +1,88 @@
 local config = require 'config';
 local httpJsonClient = require 'httpJsonClient';
+local stats = require 'stats';
 
 local distance = {}
 
-if (measureTimer) then
-    tmr.unregister(measureTimer);
-end
-measureTimer = tmr.create();
+distance.create = function ()
+    local measureTimer = tmr.create();
 
-distance.start = function ()
-    local distanceHysteresis = 25;
+    local distanceHysteresis = 20;
     local splitDistance = 150;
-    local measurementInterval = 3000;
+    local measurementInterval = 100;
+
+    local lastDistance = 0;
+    local distances = {};
 
     function start()
         rtctime.set(0, 0);
 
-        httpJsonClient.get(config.BASE_URL, 'calibration', function(code, jsonData)
+        httpJsonClient.get(config.BASE_URL, 'calibration', 200, function(code, jsonData)
             if (code == 200) then
                 distanceHysteresis = jsonData.data.distanceHysteresis;
                 splitDistance = jsonData.data.splitDistance;
                 measurementInterval = jsonData.data.measurementInterval;
-                
-                print(distanceHysteresis);
-                print(splitDistance);
-                print(measurementInterval);
+
+                print('Calibration sucessfull');
+
+                print('Hysteresis: ', distanceHysteresis);
+                print('Split distance: ', splitDistance);
+                print('Measurement interval', measurementInterval);
+
+                startMeasurement();
             else
                 print('Calibration unsucessfull, returned HTTP code ', code);
-            end       
+            end
+        end);
+    end
 
-            measureTimer:register(measurementInterval, tmr.ALARM_SEMI, function ()
-                getDistance(function (distance)
-                    sendMeasurment(distance, function ()
+    function stop()
+        measureTimer:stop();
+    end
+
+    function startMeasurement()
+        measureTimer:register(measurementInterval, tmr.ALARM_SEMI, function ()
+            getDistance(function (distance)
+                table.insert(distances, 1, distance);
+
+
+                local size = table.getn(distances);
+                if (size > 10) then
+                    table.remove(distances);
+                end
+
+                local avg = stats.median(distances);
+                
+                print(string.format('Calculated distance: %d, from: %s', avg, sjson.encode(distances)));
+            
+                if (math.abs(lastDistance - avg) > distanceHysteresis) then
+                    lastDistance = avg;
+                    sendMeasurment(avg, function ()
                         measureTimer:start();
                     end);
-                end);
+                else
+                    measureTimer:start();
+                end
+            end, function ()
+                print('No response from distance sensor');
+    
+                measureTimer:start();
             end);
-            measureTimer:start();        
         end);
+        measureTimer:start();        
     end
 
     function sendMeasurment(distance, finishedCallback)
         local body = {
-            macAddress = wifi.sta.getmac(),
+            stationId = wifi.sta.getmac():gsub(':', ''),
             distance = distance
         };
 
         print(string.format('Sending measurment %d cm', distance));
-        httpJsonClient.post(config.BASE_URL, 'measurement', body, finishedCallback);
+        httpJsonClient.post(config.BASE_URL, 'measurement', body, 201, finishedCallback);
     end
     
-    function getDistance(finishedCallback)
+    function getDistance(finishedCallback, errorCallback)
         local measurmentFinished = false;
         local startSec, startUsec;
         local endSec, endUsec;
@@ -61,10 +93,14 @@ distance.start = function ()
         gpio.mode(config.ECHO_PIN, gpio.INT);
         gpio.trig(config.ECHO_PIN, "both", function(level)
             if (level == 1) then
+                -- print('Echo pin high');
+
                 startSec, startUsec = rtctime.get();
             end
         
             if (level == 0 and startUsec ~= nil) then
+                -- print('Echo pin low');
+
                 endSec, endUsec = rtctime.get();
 
                 local waveTime = endUsec - startUsec;
@@ -76,7 +112,8 @@ distance.start = function ()
         
                 local distance = waveTime / 58;
                 measurmentFinished = true;
-                print(string.format('Measured %d cm distance (secDelta %d)', distance, secDelta));
+                -- print(string.format('Measured %d cm distance (secDelta %d)', distance, secDelta));
+                
                 finishedCallback(distance);
             end
         end)
@@ -84,8 +121,7 @@ distance.start = function ()
         triggerTimer = tmr.create()
         triggerTimer:register(500, tmr.ALARM_SINGLE, function ()
             if (not measurmentFinished) then
-                print('Repeating...');
-                getDistance(finishedCallback);
+                errorCallback();
             end
         end)
         triggerTimer:start();
@@ -99,10 +135,13 @@ distance.start = function ()
         gpio.write(config.TRIGGER_PIN, gpio.LOW);
     end
 
-    start();
+    return {
+        start = start,
+        stop = stop
+    };
 end
 
-distance.stop = function()
+distance.destroy = function()
     measureTimer.unregister(measureTimer);
 end
 
