@@ -44,6 +44,31 @@ function wifiHandler.init(wifiReadyCallback, wifiInteruppedCallback)
             wifiDisconnect(T.reason);
         end);
     end
+
+    local noWifiCount = 0;
+    local wifiCheckInterval = 1000;
+    local wifiCheckTimer = tmr.create()
+    wifiCheckTimer:register(wifiCheckInterval, tmr.ALARM_AUTO, function ()
+        local isWifiConnected = wifi.sta.status() == 5;
+
+        if (not isWifiConnected) then
+            noWifiCount = noWifiCount + 1;
+            local noWifiSeconds = noWifiCount * wifiCheckInterval / 1000;
+
+            print(string.format('Wifi not connected for %d seconds', noWifiSeconds));
+    
+            if (noWifiSeconds > 15) then
+                print('Reconnecting wifi');
+                wifi.sta.disconnect();
+                wifi.sta.connect();
+    
+                noWifiCount = 0;
+            end
+        else
+            noWifiCount = 0;
+        end
+    end)
+    wifiCheckTimer:start();
 end
 
 return wifiHandler;
