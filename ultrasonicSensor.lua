@@ -1,3 +1,5 @@
+local config = require 'config';
+
 local ultrasonicSensor = {};
 
 function ultrasonicSensor.getDistance(finishedCallback, errorCallback)
@@ -32,13 +34,13 @@ function ultrasonicSensor.getDistance(finishedCallback, errorCallback)
         end
     end)
 
-    triggerTimer = tmr.create()
-    triggerTimer:register(500, tmr.ALARM_SINGLE, function ()
+    local timeoutTimer = tmr.create()
+    timeoutTimer:register(200, tmr.ALARM_SINGLE, function ()
         if (not measurmentFinished) then
             errorCallback();
         end
     end)
-    triggerTimer:start();
+    timeoutTimer:start();
     trigger();
 end
 
