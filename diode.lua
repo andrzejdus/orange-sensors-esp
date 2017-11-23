@@ -1,6 +1,8 @@
 local diode = {};
 
 function diode.create(statusDiodePin)
+    gpio.mode(statusDiodePin, gpio.OUTPUT);
+
     local statusDiodeTimer = tmr.create();
 
     function startBlink()
