@@ -1,6 +1,7 @@
 local config = require 'config';
 local httpJsonClient = require 'httpJsonClient';
 local ultrasonicSensor = require 'ultrasonicSensor';
+local diode = require 'diode';
 local stats = require 'stats';
 
 local distance = {}
@@ -14,6 +15,9 @@ distance.create = function ()
 
     local lastDistance = 0;
     local distances = {};
+
+    local redLight = diode.create(8);
+    local greenLight = diode.create(4);
 
     function start()
         rtctime.set(0, 0);
@@ -57,6 +61,15 @@ distance.create = function ()
             
                 if (math.abs(lastDistance - currentDistance) > distanceHysteresis) then
                     lastDistance = currentDistance;
+
+                    if (currentDistance < splitDistance) then
+                        redLight.turnOn();
+                        greenLight.turnOff();
+                    else
+                        redLight.turnOff();
+                        greenLight.turnOn();
+                    end
+                    
                     sendMeasurment(currentDistance, function ()
                         measureTimer:start();
                     end);
