@@ -5,6 +5,5 @@
   "distance.lua",
   "httpJsonClient.lua",
   "stats.lua",
-  "ultrasonicSensor.lua",
-  "wifiHandler.lua"
+  "ultrasonicSensor.lua"
 ]
