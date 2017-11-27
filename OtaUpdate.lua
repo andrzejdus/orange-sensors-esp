@@ -1,9 +1,9 @@
+local Config = require 'Config';
+
 local OtaUpdate = {};
 
 function OtaUpdate.create()
     local export = {};
-
-    local OTA_BASE_URL = 'http://raw.githubusercontent.com/andrzejdus/orange-sensors-esp/master';
 
     function export.startUpdate(finishedCallback, retryCount)
         getOtaFile('ota-files.json', function (code, body)
@@ -45,7 +45,7 @@ function OtaUpdate.create()
     end
 
     function getOtaFile(filename, finishedCallback)
-        getFile(string.format('%s/%s', OTA_BASE_URL, filename), finishedCallback);
+        getFile(string.format('%s/%s', Config.OTA_URL, filename), finishedCallback);
     end
 
     function updateFiles(filesList, index, retryCount)
