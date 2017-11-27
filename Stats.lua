@@ -7,10 +7,10 @@
 
 
 -- Table to hold statistical functions
-stats={}
+Stats ={}
 
 -- Get the mean value of a table
-function stats.mean( t )
+function Stats.mean( t )
     local sum = 0
     local count= 0
 
@@ -26,7 +26,7 @@ end
 
 -- Get the mode of a table.  Returns a table of values.
 -- Works on anything (not just numbers).
-function stats.mode( t )
+function Stats.mode( t )
     local counts={}
 
     for k, v in pairs( t ) do
@@ -57,7 +57,7 @@ function stats.mode( t )
 end
 
 -- Get the median of a table.
-function stats.median( t )
+function Stats.median( t )
     local temp={}
 
     -- deep copy table so that when we sort it, the original is unchanged
@@ -82,14 +82,14 @@ end
 
 
 -- Get the standard deviation of a table
-function stats.standardDeviation( t )
+function Stats.standardDeviation( t )
     local m
     local vm
     local sum = 0
     local count = 0
     local result
 
-    m = stats.mean( t )
+    m = Stats.mean( t )
 
     for k,v in pairs(t) do
         if type(v) == 'number' then
@@ -105,7 +105,7 @@ function stats.standardDeviation( t )
 end
 
 -- Get the max and min for a table
-function stats.maxmin( t )
+function Stats.maxmin( t )
     local max = -math.huge
     local min = math.huge
 
@@ -119,4 +119,4 @@ function stats.maxmin( t )
     return max, min
 end
 
-return stats;
+return Stats;

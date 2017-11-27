@@ -1,9 +1,9 @@
-local otaUpdate = {};
+local OtaUpdate = {};
 
-function otaUpdate.create()
+function OtaUpdate.create()
     local export = {};
 
-    local OTA_BASE_URL = 'https://raw.githubusercontent.com/andrzejdus/orange-sensors-esp/master';
+    local OTA_BASE_URL = 'http://raw.githubusercontent.com/andrzejdus/orange-sensors-esp/master';
 
     function export.startUpdate(finishedCallback, retryCount)
         getOtaFile('ota-files.json', function (code, body)
@@ -20,9 +20,11 @@ function otaUpdate.create()
                     retryCount = 0;
                 end
 
-                if (retryCount < 10) then
+                if (retryCount < 3) then
                     print('Retrying OTA update, times', retryCount + 1);
                     export.startUpdate(finishedCallback, retryCount + 1);
+                else
+                    finishedCallback();
                 end
             end
         end);
@@ -79,4 +81,4 @@ function otaUpdate.create()
     return export;
 end
 
-return otaUpdate;
+return OtaUpdate;

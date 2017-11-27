@@ -1,10 +1,10 @@
-local diode = require 'diode';
-local config = require 'config';
+local Light = require 'Light';
+local Config = require 'Config';
 
-local wifiHandler = {};
+local WifiHandler = {};
 
-function wifiHandler.init(wifiReadyCallback, wifiInteruppedCallback)
-    local statusDiode = diode.create(config.STATUS_DIODE_PIN);
+function WifiHandler.init(wifiReadyCallback, wifiInteruppedCallback)
+    local statusDiode = Light.create(Config.STATUS_DIODE_PIN);
 
     function wifiConnected(ssid)
         print(string.format('Wi-Fi "%s" is connected', ssid));
@@ -24,14 +24,15 @@ function wifiHandler.init(wifiReadyCallback, wifiInteruppedCallback)
         wifiInteruppedCallback();
     end
 
-    print('Waiting for wifi...');
-    statusDiode.blink();
-
     if (wifi.sta.status() == 5) then
+        print('WiFi already connected');
         wifiConnected(wifi.sta.getconfig(true).ssid);
         local ip, netmask, gateway = wifi.sta.getip();
         gotIp(ip, netmask, gateway)
     else
+        print('Waiting for WiFi...');
+        statusDiode.blink();
+
         wifi.eventmon.register(wifi.eventmon.STA_CONNECTED, function(T)
             wifiConnected(T.SSID);
         end);
@@ -55,9 +56,9 @@ function wifiHandler.init(wifiReadyCallback, wifiInteruppedCallback)
             noWifiCount = noWifiCount + 1;
             local noWifiSeconds = noWifiCount * wifiCheckInterval / 1000;
 
-            print(string.format('Wifi not connected for %d seconds', noWifiSeconds));
+            print(string.format('Wifi not connected (status %s) for %d seconds', wifi.sta.status(), noWifiSeconds));
     
-            if (noWifiSeconds > 10) then
+            if (noWifiSeconds >= 10) then
                 print('Reconnecting wifi');
                 wifi.sta.disconnect();
                 wifi.sta.connect();
@@ -71,4 +72,4 @@ function wifiHandler.init(wifiReadyCallback, wifiInteruppedCallback)
     wifiCheckTimer:start();
 end
 
-return wifiHandler;
+return WifiHandler;

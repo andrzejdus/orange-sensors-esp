@@ -1,17 +1,17 @@
-local config = require 'config';
+local Config = require 'Config';
 
-local ultrasonicSensor = {};
+local UltrasonicSensor = {};
 
-function ultrasonicSensor.getDistance(finishedCallback, errorCallback)
+function UltrasonicSensor.getDistance(finishedCallback, errorCallback)
     local measurmentFinished = false;
     local startSec, startUsec;
     local endSec, endUsec;
 
-    gpio.mode(config.TRIGGER_PIN, gpio.OUTPUT);
-    gpio.write(config.TRIGGER_PIN, gpio.LOW);
+    gpio.mode(Config.TRIGGER_PIN, gpio.OUTPUT);
+    gpio.write(Config.TRIGGER_PIN, gpio.LOW);
 
-    gpio.mode(config.ECHO_PIN, gpio.INT);
-    gpio.trig(config.ECHO_PIN, "both", function(level)
+    gpio.mode(Config.ECHO_PIN, gpio.INT);
+    gpio.trig(Config.ECHO_PIN, "both", function(level)
         if (level == 1) then
             startSec, startUsec = rtctime.get();
         end
@@ -46,9 +46,9 @@ end
 
 function trigger()
     tmr.delay(20);
-    gpio.write(config.TRIGGER_PIN, gpio.HIGH);
+    gpio.write(Config.TRIGGER_PIN, gpio.HIGH);
     tmr.delay(10);
-    gpio.write(config.TRIGGER_PIN, gpio.LOW);
+    gpio.write(Config.TRIGGER_PIN, gpio.LOW);
 end
 
-return ultrasonicSensor;
+return UltrasonicSensor;
