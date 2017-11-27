@@ -29,6 +29,7 @@ function start()
         measurement.addMeasurementFinishedListener('net', function (measurementData, finishedCallback)
             local body = {
                 stationId = wifi.sta.getmac():gsub(':', ''),
+                isOccupied = measurementData.isOccupied,
                 distance = measurementData.currentDistance
             };
 
