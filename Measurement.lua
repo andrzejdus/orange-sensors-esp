@@ -7,8 +7,8 @@ local Measurement = {}
 Measurement.create = function ()
     local export = {};
 
-    local SPLIT_DISTANCE = 150;
-    local MEASUREMENT_INTERVAL = 100;
+    local splitDistance = 150;
+    local measurementInterval = 100;
 
     local lastIsOccupied;
     local distances = {};
@@ -20,7 +20,7 @@ Measurement.create = function ()
     function export.start()
         rtctime.set(0, 0);
 
-        timer:register(MEASUREMENT_INTERVAL, tmr.ALARM_SEMI, function ()
+        timer:register(measurementInterval, tmr.ALARM_SEMI, function ()
             UltrasonicSensor.getDistance(function (distance)
                 table.insert(distances, 1, distance);
 
@@ -38,7 +38,7 @@ Measurement.create = function ()
 
                 print(string.format('Calculated distance: %d, from: %s', currentDistance, sjson.encode(distances)));
 
-                local isOccupied = currentDistance < SPLIT_DISTANCE;
+                local isOccupied = currentDistance < splitDistance;
                 if (isOccupied ~= lastIsOccupied) then
                     lastIsOccupied = isOccupied;
 
@@ -65,6 +65,24 @@ Measurement.create = function ()
 
     function export.stop()
         timer:stop();
+    end
+
+    function export.setSplitDistance(value)
+        if (value == nil or value <= 0) then
+            print('Tried to set incorret split distance value');
+            return;
+        end
+
+        splitDistance = value;
+    end
+
+    function export.setMeasurementInterval(value)
+        if (value == nil or value <= 0) then
+            print('Tried to set incorret measurement interval value');
+            return;
+        end
+
+        measurementInterval = value;
     end
 
     function export.addMeasurementFinishedListener(listener)

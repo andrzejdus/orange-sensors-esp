@@ -4,6 +4,7 @@ local Config = require 'Config';
 local Light = require 'Light';
 local WifiHandler = require 'WifiHandler';
 local Measurement = require 'Measurement';
+local CalibrationClient = require 'CalibrationClient';
 local HttpJsonClient = require 'HttpJsonClient';
 
 
@@ -24,7 +25,7 @@ measurement.addMeasurementFinishedListener(function (measurementData, onListener
 end);
 measurement.start();
 
-function onMeasurementFinished(measurementData, onListenerProcessingFinished)
+local function sendMeasurement(measurementData, onListenerProcessingFinished)
     local body = {
         stationId = wifi.sta.getmac():gsub(':', ''),
         isOccupied = measurementData.isOccupied,
@@ -36,16 +37,27 @@ function onMeasurementFinished(measurementData, onListenerProcessingFinished)
     HttpJsonClient.post(Config.BASE_URL, 'measurement', body, 201, onListenerProcessingFinished);
 end
 
+local function start()
+    CalibrationClient.getCalibrationData(function (calibrationData)
+        measurement.setSplitDistance(calibrationData.splitDistance);
+        measurement.setMeasurementInterval(calibrationData.measurementInterval);
+
+        measurement.addMeasurementFinishedListener(sendMeasurement);
+    end, function ()
+        measurement.addMeasurementFinishedListener(sendMeasurement);
+    end);
+end
+
 WifiHandler.init(function ()
     sntp.sync({'0.pool.ntp.org', '1.pool.ntp.org'}, function (seconds, microseconds, server, info)
         print('NTP sync finished', seconds, microseconds, server, info);
 
-        measurement.addMeasurementFinishedListener(onMeasurementFinished);
+        start();
     end, function (code, message)
         print('NTP sync error, code', code, message);
 
-        measurement.addMeasurementFinishedListener(onMeasurementFinished);
+        start();
     end);
 end, function ()
-    measurement.removeMeasurementFinishedListener(onMeasurementFinished);
+    measurement.removeMeasurementFinishedListener(sendMeasurement);
 end);
