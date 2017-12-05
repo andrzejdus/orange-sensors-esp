@@ -7,7 +7,6 @@ EventDispatcher.create = function ()
     local listenersCount = 0;
 
     function export.addListener(listener)
-        print('add', listener);
         listeners = { next = listeners, value = listener };
         listenersCount = listenersCount + 1;
     end
@@ -39,7 +38,6 @@ EventDispatcher.create = function ()
         local current = listeners
 
         while current do
-            print(current);
             local listener = current.value;
             listener(data, function ()
                 callbacksFinishedCount = callbacksFinishedCount + 1;

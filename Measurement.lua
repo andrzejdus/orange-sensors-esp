@@ -51,7 +51,6 @@ Measurement.create = function ()
                     };
 
                     measurementFinishedListeners.dispatch(measurementData, function ()
-                        print('RESTART');
                         timer:start();
                     end);
                 else
