@@ -7,11 +7,10 @@ local Measurement = {}
 Measurement.create = function ()
     local export = {};
 
-    local DISTANCE_HYSTERESIS = 20;
     local SPLIT_DISTANCE = 150;
     local MEASUREMENT_INTERVAL = 100;
 
-    local lastDistance = 0;
+    local lastIsOccupied;
     local distances = {};
 
     local measurementFinishedListeners = EventDispatcher.create();
@@ -37,17 +36,15 @@ Measurement.create = function ()
                     return;
                 end
 
-                print(currentDistance);
-                print(sjson.encode(distances));
-                
                 print(string.format('Calculated distance: %d, from: %s', currentDistance, sjson.encode(distances)));
 
-                if (math.abs(lastDistance - currentDistance) > DISTANCE_HYSTERESIS) then
-                    lastDistance = currentDistance;
+                local isOccupied = currentDistance < SPLIT_DISTANCE;
+                if (isOccupied ~= lastIsOccupied) then
+                    lastIsOccupied = isOccupied;
 
                     local measurementData = {
                         currentDistance = currentDistance,
-                        isOccupied = currentDistance < SPLIT_DISTANCE
+                        isOccupied = isOccupied
                     };
 
                     measurementFinishedListeners.dispatch(measurementData, function ()
