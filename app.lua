@@ -11,7 +11,7 @@ local redLight = Light.create(Config.RED_LIGHT_PIN);
 local greenLight = Light.create(Config.GREEN_LIGHT_PIN);
 
 local measurement = Measurement.create();
-measurement.addMeasurementFinishedListener(function (measurementData, finishedCallback)
+measurement.addMeasurementFinishedListener(function (measurementData, onListenerProcessingFinished)
     if (measurementData.isOccupied) then
         redLight.turnOn();
         greenLight.turnOff();
@@ -19,10 +19,12 @@ measurement.addMeasurementFinishedListener(function (measurementData, finishedCa
         redLight.turnOff();
         greenLight.turnOn();
     end
+
+    onListenerProcessingFinished();
 end);
 measurement.start();
 
-function onMeasurementFinished(measurementData, finishedCallback)
+function onMeasurementFinished(measurementData, onListenerProcessingFinished)
     local body = {
         stationId = wifi.sta.getmac():gsub(':', ''),
         isOccupied = measurementData.isOccupied,
@@ -31,7 +33,7 @@ function onMeasurementFinished(measurementData, finishedCallback)
 
     print(string.format('Sending measurment %d cm', measurementData.currentDistance));
 
-    HttpJsonClient.post(Config.BASE_URL, 'measurement', body, 201, finishedCallback);
+    HttpJsonClient.post(Config.BASE_URL, 'measurement', body, 201, onListenerProcessingFinished);
 end
 
 WifiHandler.init(function ()
