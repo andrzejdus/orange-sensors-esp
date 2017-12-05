@@ -37,7 +37,15 @@ function onMeasurementFinished(measurementData, onListenerProcessingFinished)
 end
 
 WifiHandler.init(function ()
-    measurement.addMeasurementFinishedListener(onMeasurementFinished);
+    sntp.sync({'0.pool.ntp.org', '1.pool.ntp.org'}, function (seconds, microseconds, server, info)
+        print('NTP sync finished', seconds, microseconds, server, info);
+
+        measurement.addMeasurementFinishedListener(onMeasurementFinished);
+    end, function (code, message)
+        print('NTP sync error, code', code, message);
+
+        measurement.addMeasurementFinishedListener(onMeasurementFinished);
+    end);
 end, function ()
     measurement.removeMeasurementFinishedListener(onMeasurementFinished);
 end);

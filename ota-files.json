@@ -1,9 +1,0 @@
-[
-  "app.lua",
-  "Config.lua",
-  "Light.lua",
-  "HttpJsonClient.lua",
-  "Measurement.lua",
-  "Stats.lua",
-  "UltrasonicSensor.lua"
-]
