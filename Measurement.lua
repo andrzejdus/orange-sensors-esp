@@ -76,7 +76,7 @@ Measurement.create = function ()
     end
 
     function export.removeMeasurementFinishedListener(listener)
-        measurementFinishedListeners.removeListner(listener);
+        measurementFinishedListeners.removeListener(listener);
     end
 
     return export;
