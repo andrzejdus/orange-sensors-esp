@@ -5,14 +5,14 @@ local OtaUpdate = {};
 function OtaUpdate.create()
     local export = {};
 
-    function export.startUpdate(finishedCallback, retryCount)
+    function export.checkAndUpdate(finishedCallback, retryCount)
         getOtaFile('ota-files.json', function (code, body)
             if (code ~= -1) then
                 local filesList = sjson.decode(body);
                 for key, filename in pairs(filesList) do
                     print('Will try to update', key, filename);
                 end
-                updateFiles(filesList, 1, 0);
+                updateFiles(filesList, 1, 0, finishedCallback);
             else
                 print('Error updating, response', body);
 
@@ -24,10 +24,13 @@ function OtaUpdate.create()
                     print('Retrying OTA update, times', retryCount + 1);
                     export.startUpdate(finishedCallback, retryCount + 1);
                 else
-                    finishedCallback();
+                    finishedCallback(false);
                 end
             end
         end);
+    end
+
+    function getCurrentVersion()
     end
 
     function getFile(url, finishedCallback)
@@ -48,31 +51,31 @@ function OtaUpdate.create()
         getFile(string.format('%s/%s', Config.OTA_URL, filename), finishedCallback);
     end
 
-    function updateFiles(filesList, index, retryCount)
+    function updateFiles(filesList, index, retryCount, finishedCallback)
         local filename = filesList[index];
         print('Getting ', filename);
         getOtaFile(filename, function (code, body)
             if (code ~= -1) then
-                print(body);
-
-                saveFile(content);
+                saveFile(filename, body);
 
                 if (index + 1 <= table.getn(filesList)) then
-                    updateFiles(filesList, index + 1, 0);
+                    updateFiles(filesList, index + 1, 0, finishedCallback);
+                else
+                    finishedCallback();
                 end
             else
                 if (retryCount < 10) then
-                    updateFiles(filesList, index, retryCount + 1);
+                    updateFiles(filesList, index, retryCount + 1, finishedCallback);
                 else
                     print('Max retries for file reached, filename', filename);
-                    updateFiles(filesList, index + 1, 0);
+                    updateFiles(filesList, index + 1, 0, finishedCallback);
                 end
             end
         end);
     end
 
-    function saveFile(content)
-        if file.open(string.format('_%s', filename), 'a+') then
+    function saveFile(filename, content)
+        if file.open(string.format('_%s', filename), 'w+') then
             file.writeline(content);
             file.close();
         end

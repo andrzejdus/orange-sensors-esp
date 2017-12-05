@@ -1,7 +1,7 @@
 [
   "app.lua",
   "Config.lua",
-  "Diode.lua",
+  "Light.lua",
   "HttpJsonClient.lua",
   "Measurement.lua",
   "Stats.lua",
