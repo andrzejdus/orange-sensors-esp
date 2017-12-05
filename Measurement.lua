@@ -1,3 +1,4 @@
+local EventDispatcher = require 'EventDispatcher';
 local UltrasonicSensor = require 'UltrasonicSensor';
 local Stats = require 'Stats';
 
@@ -13,7 +14,7 @@ Measurement.create = function ()
     local lastDistance = 0;
     local distances = {};
 
-    local measurementFinishedListeners = {};
+    local measurementFinishedListeners = EventDispatcher.create();
 
     local timer = tmr.create();
 
@@ -31,6 +32,14 @@ Measurement.create = function ()
 
                 local currentDistance = Stats.median(distances);
 
+                if (currentDistance == nil) then
+                    timer:start();
+                    return;
+                end
+
+                print(currentDistance);
+                print(sjson.encode(distances));
+                
                 print(string.format('Calculated distance: %d, from: %s', currentDistance, sjson.encode(distances)));
 
                 if (math.abs(lastDistance - currentDistance) > DISTANCE_HYSTERESIS) then
@@ -41,7 +50,8 @@ Measurement.create = function ()
                         isOccupied = currentDistance < SPLIT_DISTANCE
                     };
 
-                    dispatchMeasurementFinishedListener(measurementData, function ()
+                    measurementFinishedListeners.dispatch(measurementData, function ()
+                        print('RESTART');
                         timer:start();
                     end);
                 else
@@ -61,30 +71,12 @@ Measurement.create = function ()
         timer:stop();
     end
 
-    function export.addMeasurementFinishedListener(id, measurementFinishedListener)
-        measurementFinishedListeners[id] = measurementFinishedListener;
+    function export.addMeasurementFinishedListener(listener)
+        measurementFinishedListeners.addListener(listener);
     end
 
-    function export.removeMeasurementFinishedListener(id)
-        measurementFinishedListeners[id] = nil;
-    end
-
-    function dispatchMeasurementFinishedListener(measurementData, callback)
-        local measurementFinishedCallbacksCount = table.getn(measurementFinishedListeners);
-        local callbacksFinished = 0;
-
-        for listenerId, listener in pairs(measurementFinishedListeners) do
-            listener(measurementData, function ()
-                callbacksFinished = callbacksFinished + 1;
-                if (callbacksFinished == measurementFinishedCallbacksCount) then
-                    callback();
-                end
-            end);
-        end
-
-        if (measurementFinishedCallbacksCount == 0) then
-            callback();
-        end
+    function export.removeMeasurementFinishedListener(listener)
+        measurementFinishedListeners.removeListner(listener);
     end
 
     return export;
